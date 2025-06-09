@@ -78,7 +78,7 @@ def get_transforms(img_size):
 def extract_gallery_features():
     print("Loading model...")
     model = TimmModel(Config.model_path, pretrained=True, img_size=Config.img_size)
-    model.load_state_dict(torch.load(Config.checkpoint), strict=False)
+    model.load_state_dict(torch.load(Config.checkpoint,map_location=Config.device), strict=False)
     model.to(Config.device)
     model.eval()
     

@@ -164,7 +164,7 @@ data/
 pretrained/
 .DS_Store
 # Ignore entire directories
-Data/
+Data/**
 university_main/
 
 # Ignore specific file types
@@ -176,3 +176,4 @@ university_main/
 university_main/convnext_base.fb_in22k_ft_in1k_384_jit.pt
 university_main/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth
 results/**
+!Data/test-path.csv
