@@ -2,9 +2,11 @@ import requests
 import os
 import numpy as np
 import csv
+from dotenv import load_dotenv
 
+load_dotenv()
 # 🔑 Google Maps API Key (Replace with your own valid key)
-API_KEY = "API_KEY_HERE"  # Replace with your actual Google Maps API key
+API_KEY = os.getenv("GMAP_API_KEY")  # Replace with your actual Google Maps API key
 
 # 🌍 Google Maps Settings
 ZOOM = 22  # High resolution
@@ -26,11 +28,9 @@ CSV_PATH = './Data/gallery_satellite_image_coordinates_grid.csv'
 def load_waypoints(csv_file):
     waypoints = []
     with open(csv_file, "r") as f:
-        reader = csv.reader(f)
-        next(reader)  # Skip header
+        reader = csv.DictReader(f)
         for row in reader:
-            lat, lon = map(float, row)
-            waypoints.append((lat, lon))
+            waypoints.append((float(row['latitude']),float(row['longitude'])))
     return waypoints
 
 # 🧭 Ground resolution at zoom level

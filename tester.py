@@ -50,6 +50,7 @@ def run_test_model(image_path):
 # Convert quaternion to yaw angle in radians
         yaw = airsim.quaternion_to_euler_angles(orientation)[2]  # returns (roll, pitch, yaw)
         gps_pos = get_location()
+        print(gps_pos)
         last_pos = match_query_imu.main(last_known_position=last_pos,velocity=kinematics.linear_velocity.get_length(),acceleration=kinematics.linear_acceleration.get_length(),heading=yaw,dt=dt)
         writer.writerow([gps_pos[0],gps_pos[1],last_pos[0],last_pos[1]])
         last_time = time.time()
@@ -95,7 +96,7 @@ def monitor_directory():
                     print(f"Error processing {image_file}: {str(e)}")
         
         # Wait for 0.1 second before checking again
-        time.sleep(5)
+        time.sleep(4)
 
 def main():
     print("Starting at pos",last_pos)

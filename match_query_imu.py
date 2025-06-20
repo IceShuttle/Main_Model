@@ -9,6 +9,7 @@ from torch.nn.functional import normalize
 from geopy.distance import geodesic
 from sample4geo.model import TimmModel
 from imu_utils import estimate_position  # Function to estimate position from IMU data
+from mift_shift import calculate_image_offset_mift
 
 class Config:
     model_path = './university_main/convnext_base.fb_in22k_ft_in1k_384'
@@ -16,9 +17,11 @@ class Config:
     gpu_ids = (0,)
     normalize_features = True
     query_folder = './Data/hall10_data/query_drone/0'
+    image_grid_directory = './Data/gallery_satellite/0'
     checkpoint = './university_main/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth'
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     gallery_data_file = 'gallery_data.npz'  # Using grid structure
+    alpha = .8
    
     max_search_radius = 3  # Search within a grid radius of 3 path/row IDs
 
@@ -95,6 +98,9 @@ def load_model():
         traced_model.save(jit_path)
     return model
 
+def lerp(a,b,alpha=Config.alpha):
+    return a*alpha + (1-alpha)*b
+
 def process_single_query(model, gallery_grid, last_known_position, velocity, acceleration, heading,dt):
     """Estimate position using IMU, search nearby grid, and find the best match."""
     img_path = next((os.path.join(Config.query_folder, f) for f in os.listdir(Config.query_folder)
@@ -127,17 +133,21 @@ def process_single_query(model, gallery_grid, last_known_position, velocity, acc
 
     # Find best match within the grid search space
     best_match = find_best_match(query_feature, nearby_features, metadata)
+    best_match_path = os.path.join(Config.image_grid_directory,best_match['image_name'])
+    query_match_path = img_path
 
+    
     if best_match is None:
         print(f"No match found within the search grid window. Try expanding the search.")
     else:
+        # offset_data = calculate_image_offset_mift(best_match_path,query_match_path,.0332)
+        # print("offset is",offset_data["distance_offset_m"])
         print(f"Query Image: {os.path.basename(img_path)}, Match: {best_match['image_name']}, "
               f"Estimated IMU Position: {estimated_position}, Match Coordinates: ({best_match['latitude']}, {best_match['longitude']})")
+    final_pos = (lerp(estimated_position[0],best_match['latitude']),lerp(estimated_position[1],best_match['longitude']))
+    return final_pos
+    # return (best_match['latitude'],best_match['longitude'])
 
-    return (best_match['latitude'],best_match['longitude'])
-
-if __name__ == '__main__':
-    main()
 
 def main(model=load_model(),gallery_grid=load_gallery_data(),last_known_position = (26.5115960437853,80.22629763462655),velocity = 8.570,acceleration=0,heading=3.125,dt=1):
     # model = load_model()
@@ -146,3 +156,6 @@ def main(model=load_model(),gallery_grid=load_gallery_data(),last_known_position
     # velocity, acceleration, heading = (8.570, 0, 3.125)  # Replace with actual IMU data
     # dt = 1
     return process_single_query(model, gallery_grid, last_known_position, velocity, acceleration, heading,dt)
+
+if __name__ == '__main__':
+    main()
